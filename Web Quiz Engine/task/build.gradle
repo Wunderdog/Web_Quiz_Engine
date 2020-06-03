@@ -1,0 +1,25 @@
+plugins {
+    id 'org.springframework.boot' version '2.2.2.RELEASE'
+    id 'java'
+}
+
+apply plugin: 'io.spring.dependency-management'
+
+sourceCompatibility = '11'
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets.main.resources.srcDirs = ["src/resources"]
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.10.0'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.10.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
+    implementation 'com.fasterxml.jackson.core:TSFBuilder:2.10.0'
+    implementation 'com.github.rkonovalov:json-ignore:1.0.15'
+    compile("org.springframework.boot:spring-boot-starter-web")
+}
