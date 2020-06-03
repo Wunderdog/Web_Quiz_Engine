@@ -1,10 +1,5 @@
 package engine;
 
-import com.fasterxml.jackson.annotation.JsonFilter;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
-//@JsonIgnoreProperties (value = { "answer" })
-//@JsonFilter("questionFilter")
 public class Question {
     public int getId() {
         return id;
@@ -26,14 +21,11 @@ public class Question {
 
     public void setAnswer(int answer) {
         this.answer = answer;
-//        System.out.println(String.format("%s, %s, %s, %s, %s", this.id, this.title, this.text, this.options, this.answer));
-
     }
 
 
 
     public Question() {
-//        System.out.println(String.format("%s, %s, %s, %s, %s", this.id, this.title, this.text, this.options, this.answer));
     }
 
     public Question(String title, String text, String[] options) {
@@ -55,7 +47,6 @@ public class Question {
         this.setText(text);
         this.setOptions(options);
         this.setAnswer(answer);
-//        System.out.println(String.format("%s, %s, %s, %s, %s", this.id, this.title, this.text, this.options, this.answer));
     }
 
     public String getTitle() {
