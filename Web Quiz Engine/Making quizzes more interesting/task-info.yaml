@@ -712,6 +712,297 @@ files:
         }
     }
   learner_created: false
+- name: src/engine/QuizResult.java
+  visible: true
+  text: |
+    package engine;
+
+    public class QuizResult {
+        boolean success;
+        String feedback;
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public void setSuccess(boolean success) {
+            this.success = success;
+        }
+
+        public String getFeedback() {
+            return feedback;
+        }
+
+        public void setFeedback(String feedback) {
+            this.feedback = feedback;
+        }
+
+        String correct = "Congratulations, you're right!";
+        String wrong = "Wrong answer! Please, try again.";
+
+        QuizResult() {}
+
+        QuizResult(boolean success, String feedback) {
+            if(feedback == "correct") {
+                this.success = true;
+                this.feedback = correct;
+            } else
+            if(feedback == "wrong" ){
+                this.success = false;
+                this.feedback = wrong;
+            }
+        }
+
+    }
+  learner_created: true
+- name: src/resources/application.properties
+  visible: true
+  text: |
+    server.port=8889
+    management.endpoints.web.exposure.include=*
+    management.endpoint.shutdown.enabled=true
+  learner_created: true
+- name: src/engine/WebQuizEngine.java
+  visible: true
+  text: |
+    package engine;
+
+    import org.springframework.boot.SpringApplication;
+    import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+    @SpringBootApplication
+    public class WebQuizEngine {
+
+        public static void main(String[] args) {
+            SpringApplication.run(WebQuizEngine.class, args);
+        }
+
+    }
+  learner_created: true
+- name: build.gradle
+  visible: true
+  text: |
+    plugins {
+        id 'org.springframework.boot' version '2.2.2.RELEASE'
+        id 'java'
+    }
+
+    apply plugin: 'io.spring.dependency-management'
+
+    sourceCompatibility = '11'
+
+    repositories {
+        mavenCentral()
+    }
+
+    sourceSets.main.resources.srcDirs = ["src/resources"]
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter'
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
+        implementation 'com.fasterxml.jackson.core:jackson-core:2.10.0'
+        implementation 'com.fasterxml.jackson.core:jackson-annotations:2.10.0'
+        implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
+    //    implementation 'com.fasterxml.jackson.core:TSFBuilder:2.10.0'
+        implementation 'com.github.rkonovalov:json-ignore:1.0.15'
+        compile("org.springframework.boot:spring-boot-starter-web")
+    }
+  learner_created: true
+- name: src/engine/QuestionController.java
+  visible: true
+  text: |
+    package engine;
+
+    import java.util.HashMap;
+    import java.util.Map;
+
+    import com.fasterxml.jackson.core.JsonProcessingException;
+    import com.jfilter.EnableJsonFilter;
+    import com.jfilter.filter.FieldFilterSetting;
+    import org.springframework.context.annotation.ComponentScan;
+    import org.springframework.http.HttpHeaders;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.web.bind.annotation.*;
+    import org.springframework.http.ResponseEntity;
+
+
+    @ComponentScan({"com.jfilter.components"})
+    @EnableJsonFilter
+    @RestController
+    public class QuestionController {
+        private Map<Integer, Question> questions = new HashMap<>();
+        private int currentId = 1;
+
+        public QuestionController() {
+
+        }
+
+        Question testQuestion = new Question(
+            "The Java Logo",
+            "What is depicted on the Java logo?",
+            new String[]{"Robot","Tea leaf","Cup of coffee","Bug"}
+        );
+
+        @PostMapping(path = "/api/quiz")
+        public ResponseEntity<QuizResult> submitAnswer(@RequestParam(value = "answer") int answer) {
+            if (answer == 2) {
+                return new ResponseEntity<QuizResult>(new QuizResult(true, "correct"), HttpStatus.OK);
+            }
+            return new ResponseEntity<QuizResult>( new QuizResult(false, "wrong"), HttpStatus.OK);
+        }
+
+        @FieldFilterSetting(className = Question.class, fields = {"answer"})
+        @PostMapping(path = "/api/quizzes", consumes = "application/json")
+        public ResponseEntity addQuestion(@RequestBody Question newQuestion) throws JsonProcessingException {
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.add("Content-Type", "application/json");
+            if (newQuestion.getId() == 0) {
+                newQuestion.setId(currentId);
+                currentId += 1;
+            }
+            questions.put(newQuestion.getId(), newQuestion);
+            return new ResponseEntity(questions.get(newQuestion.getId()), responseHeaders, HttpStatus.OK);
+        }
+
+        @PostMapping(path = "/api/quizzes/{id}/solve")
+        public ResponseEntity submitAnswerById(@PathVariable int id,
+                                               @RequestParam int answer) {
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.add("Content-Type", "application/json");
+
+            if (!questions.containsKey(id)) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+            if (answer == questions.get(id).getAnswer()) {
+                return new ResponseEntity(new QuizResult(true, "correct"), responseHeaders, HttpStatus.OK);
+            }
+            System.out.println(String.format("%s = %s", answer, questions.get(id).getAnswer()));
+
+            return new ResponseEntity( new QuizResult(false, "wrong"), responseHeaders, HttpStatus.OK);
+        }
+
+        @FieldFilterSetting(className = Question.class, fields = {"answer"})
+        @GetMapping(path = "/api/quiz")
+        public ResponseEntity<Question> getQuestion() {
+            Question question = testQuestion;
+            return new ResponseEntity<Question>(question, HttpStatus.OK);
+        }
+
+        @FieldFilterSetting(className = Question.class, fields = {"answer"})
+        @GetMapping(path = "/api/quizzes/{id}")
+        public ResponseEntity getQuestionById(@PathVariable int id) throws JsonProcessingException {
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.add("Content-Type", "application/json");
+            if (!questions.containsKey(id)) {
+                return new ResponseEntity(HttpStatus.NOT_FOUND);
+            }
+            return new ResponseEntity(questions.get(id), responseHeaders, HttpStatus.OK);
+        }
+
+        @FieldFilterSetting(className = Question.class, fields = {"answer"})
+        @GetMapping(path = "/api/quizzes")
+        public ResponseEntity getQuestionById() throws JsonProcessingException {
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.add("Content-Type", "application/json");
+
+            return new ResponseEntity(questions.values(), responseHeaders, HttpStatus.OK);
+        }
+    }
+  learner_created: true
+- name: src/engine/Question.java
+  visible: true
+  text: |
+    package engine;
+
+    public class Question {
+        public int getId() {
+            return id;
+        }
+
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        private int id;
+        private String title;
+        private String text;
+        private String[] options;
+        private int answer;
+
+        public int getAnswer() {
+            return answer;
+        }
+
+        public void setAnswer(int answer) {
+            this.answer = answer;
+        }
+
+
+
+        public Question() {
+        }
+
+        public Question(String title, String text, String[] options) {
+            this.setTitle(title);
+            this.setText(text);
+            this.setOptions(options);
+        }
+
+        public Question(String title, String text, String[] options, int answer) {
+            this.setTitle(title);
+            this.setText(text);
+            this.setOptions(options);
+            this.setId(answer);
+        }
+
+        public Question(int id, String title, String text, String[] options, int answer) {
+            this.setId(id);
+            this.setTitle(title);
+            this.setText(text);
+            this.setOptions(options);
+            this.setAnswer(answer);
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public void setText(String text) {
+            this.text = text;
+        }
+
+        public String[] getOptions() {
+            return options;
+        }
+
+        public void setOptions(String[] options) {
+            this.options = options;
+        }
+    }
+  learner_created: true
+- name: src/engine/ControllerExceptionHandler.java
+  visible: true
+  learner_created: true
+- name: src/validator/QuizOptionsConstraint.java
+  visible: true
+  learner_created: true
+- name: src/validator/QuizAnswerConstraint.java
+  visible: true
+  learner_created: true
+- name: src/engine/Answer.java
+  visible: true
+  learner_created: true
+- name: src/engine/QuizBank.java
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/91/stages/506/implement
-status: Unchecked
+status: Solved
 record: -1
