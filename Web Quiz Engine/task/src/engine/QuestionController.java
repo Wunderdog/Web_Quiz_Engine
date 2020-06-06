@@ -24,20 +24,6 @@ public class QuestionController {
 
     public QuestionController() {}
 
-    Question testQuestion = new Question(
-        "The Java Logo",
-        "What is depicted on the Java logo?",
-        new String[]{"Robot","Tea leaf","Cup of coffee","Bug"}
-    );
-
-    @PostMapping(path = "/api/quiz")
-    public ResponseEntity<QuizResult> submitAnswer(@RequestParam(value = "answer") int answer) {
-        if (answer == 2) {
-            return new ResponseEntity<QuizResult>(new QuizResult(true, "correct"), HttpStatus.OK);
-        }
-        return new ResponseEntity<QuizResult>( new QuizResult(false, "wrong"), HttpStatus.OK);
-    }
-
     @FieldFilterSetting(className = Question.class, fields = {"answer"})
     @PostMapping(path = "/api/quizzes", consumes = "application/json")
     public ResponseEntity addQuestion(@RequestBody @Valid Question newQuestion) throws JsonProcessingException {
@@ -58,13 +44,6 @@ public class QuestionController {
         }
         return new ResponseEntity( new QuizResult(false, "wrong"),
                 JSON_RESPONSE_HEADERS, HttpStatus.OK);
-    }
-
-    @FieldFilterSetting(className = Question.class, fields = {"answer"})
-    @GetMapping(path = "/api/quiz")
-    public ResponseEntity<Question> getQuestion() {
-        Question question = testQuestion;
-        return new ResponseEntity<Question>(question, HttpStatus.OK);
     }
 
     @FieldFilterSetting(className = Question.class, fields = {"answer"})
