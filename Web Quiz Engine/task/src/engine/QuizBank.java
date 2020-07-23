@@ -5,10 +5,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class QuizBank {
-    private Map<Integer, Question> questions = new HashMap<>();
-    private int currentId = 1;
+    private Map<Long, Question> questions = new HashMap<>();
+    private long currentId = 1;
 
-    public int addQuestion(Question newQuestion) {
+    public long addQuestion(Question newQuestion) {
         if (newQuestion.getId() == 0) {
             newQuestion.setId(currentId);
             currentId += 1;
@@ -17,19 +17,19 @@ public class QuizBank {
         return newQuestion.getId();
     }
 
-    public Question getQuestion(int id) {
+    public Question getQuestion(long id) {
         return questions.get(id);
     }
 
-    public boolean containsId(int id) {
+    public boolean containsId(long id) {
         return questions.containsKey(id);
     }
 
-    public boolean checkAnswer(Answer answer, int id) {
+    public boolean checkAnswer(Answer answer, long id) {
         return answer.getAnswer().equals(questions.get(id).getAnswer());
     }
 
-    public Question get(int id) {
+    public Question get(long id) {
         return questions.get(id);
     }
 

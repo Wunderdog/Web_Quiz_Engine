@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jfilter.EnableJsonFilter;
 import com.jfilter.filter.FieldFilterSetting;
 import org.apache.tomcat.util.json.ParseException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,8 @@ import javax.validation.Valid;
 @EnableJsonFilter
 @RestController
 public class QuestionController {
+    @Autowired
+    private QuestionRepository questionRepository;
 
     private QuizBank quizBank = new QuizBank();
     private final HttpHeaders JSON_RESPONSE_HEADERS = new HttpHeaders() {{
@@ -27,9 +30,11 @@ public class QuestionController {
     @FieldFilterSetting(className = Question.class, fields = {"answer"})
     @PostMapping(path = "/api/quizzes", consumes = "application/json")
     public ResponseEntity addQuestion(@RequestBody @Valid Question newQuestion) throws JsonProcessingException {
-        int id = quizBank.addQuestion(newQuestion);
+        long id = quizBank.addQuestion(newQuestion);
+        questionRepository.save(newQuestion);
         return new ResponseEntity(quizBank.getQuestion(id), JSON_RESPONSE_HEADERS, HttpStatus.OK);
     }
+
 
     @PostMapping(path = "/api/quizzes/{id}/solve", consumes = "application/json")
     public ResponseEntity submitAnswerById(@PathVariable int id,
@@ -46,6 +51,7 @@ public class QuestionController {
                 JSON_RESPONSE_HEADERS, HttpStatus.OK);
     }
 
+
     @FieldFilterSetting(className = Question.class, fields = {"answer"})
     @GetMapping(path = "/api/quizzes/{id}")
     public ResponseEntity getQuestionById(@PathVariable int id) throws JsonProcessingException {
@@ -55,6 +61,7 @@ public class QuestionController {
         }
         return new ResponseEntity(quizBank.get(id), JSON_RESPONSE_HEADERS, HttpStatus.OK);
     }
+
 
     @FieldFilterSetting(className = Question.class, fields = {"answer"})
     @GetMapping(path = "/api/quizzes")
